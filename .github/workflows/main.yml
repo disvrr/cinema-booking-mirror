@@ -25,7 +25,7 @@ jobs:
           git push origin sync/upstream --force
       - name: Update PR
         env:
-          GH_TOKEN: ${{ secrets.SYNC_DEMO1 }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           if ! gh api repos/${{ github.repository }}/pulls \
              -f title="Sync from upstream" \
