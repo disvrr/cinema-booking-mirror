@@ -15,12 +15,17 @@ pipeline {
     }
 
     stages {
-        stage('Build') {
-            steps {
-                sh 'mvn test'
-            }
-        }
+        stage('Tests') {
+    steps {
+        sh 'mvn test'
+    }
+}
 
+stage('Build') {
+    steps {
+        sh 'mvn package -DskipTests'
+    }
+}
         stage('Deploy to app1') {
             steps {
                 sh '''
