@@ -9,9 +9,9 @@ pipeline {
     }
 
     environment {
-        DEPLOY_USER = 'shevua'
+        DEPLOY_USER = 'deploy'
         JAR     = 'cinema-booking-1.0.0-SNAPSHOT.jar'
-        APP_DIR = '/home/shevua/DevOps-Demo1/target'
+        APP_DIR = '/home/deploy/DevOps-Demo1/target'
     }
 
     stages {
@@ -24,10 +24,10 @@ pipeline {
         stage('Deploy to app1') {
             steps {
                 sh '''
-                    ssh $DEPLOY_USER@app1.local "mkdir -p $APP_DIR"
-                    scp target/$JAR $DEPLOY_USER@app1.local:$APP_DIR/
-                    ssh $DEPLOY_USER@app1.local "sudo -n /opt/cinema/setup_app.sh"
-                    timeout 120 bash -c 'until curl -sf -o /dev/null http://app1.local:8080; do sleep 5; done'
+                    ssh $DEPLOY_USER@app1 "mkdir -p $APP_DIR"
+                    scp target/$JAR $DEPLOY_USER@app1:$APP_DIR/
+                    ssh $DEPLOY_USER@app1 "sudo -n /opt/cinema/setup_app.sh"
+                    timeout 120 bash -c 'until curl -sf -o /dev/null http://app1:8080; do sleep 5; done'
                 '''
             }
         }
@@ -35,10 +35,10 @@ pipeline {
         stage('Deploy to app2') {
             steps {
                 sh '''
-                    ssh $DEPLOY_USER@app2.local "mkdir -p $APP_DIR"
-                    scp target/$JAR $DEPLOY_USER@app2.local:$APP_DIR/
-                    ssh $DEPLOY_USER@app2.local "sudo -n /opt/cinema/setup_app.sh"
-                    timeout 120 bash -c 'until curl -sf -o /dev/null http://app2.local:8080; do sleep 5; done'
+                    ssh $DEPLOY_USER@app2 "mkdir -p $APP_DIR"
+                    scp target/$JAR $DEPLOY_USER@app2:$APP_DIR/
+                    ssh $DEPLOY_USER@app2 "sudo -n /opt/cinema/setup_app.sh"
+                    timeout 120 bash -c 'until curl -sf -o /dev/null http://app2:8080; do sleep 5; done'
                 '''
             }
         }
