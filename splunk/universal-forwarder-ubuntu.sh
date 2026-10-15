@@ -63,20 +63,24 @@ if ! systemctl is-active --quiet SplunkForwarder; then
     sleep 15
 fi
 
+# allow forwarder read the journal and application logs
+usermod -aG systemd-journal,adm splunkfwd
+
 # host name for Splunk
 sudo -u splunkfwd "$SPLUNK_HOME"/bin/splunk set default-hostname "$HOST_NAME" -auth "${FWD_USR}:${FWD_PASS}"
+
+# os log index
+INPUTS="$SPLUNK_HOME/etc/system/local/inputs.conf"
+if ! grep -qs '^\[journald://os\]' "$INPUTS"; then
+    printf '\n[journald://os]\nindex = os\n' | sudo -u splunkfwd tee -a "$INPUTS" > /dev/null
+fi
+
+# apply the groups, the host name and the journal input changes
 systemctl restart SplunkForwarder
 sleep 10
 
 # forwarding data
 sudo -u splunkfwd "$SPLUNK_HOME"/bin/splunk add forward-server "${RECEIVER_ADDR}:${RECEIVER_PORT:-9997}" -auth "${FWD_USR}:${FWD_PASS}" \
     || echo "forward-server already configured"
-sudo -u splunkfwd "$SPLUNK_HOME"/bin/splunk add monitor "$LOG_DIR" -index "$INDEX" -auth "${FWD_USR}:${FWD_PASS}"
-
-# os log index
-INPUTS="$SPLUNK_HOME/etc/system/local/inputs.conf"
-if ! grep -qs '^\[journald://os\]' "$INPUTS"; then
-    usermod -aG systemd-journal,adm splunkfwd
-    printf '\n[journald://os]\nindex = os\n' | sudo -u splunkfwd tee -a "$INPUTS" > /dev/null
-    systemctl restart SplunkForwarder
-fi
+sudo -u splunkfwd "$SPLUNK_HOME"/bin/splunk add monitor "$LOG_DIR" -index "$INDEX" -auth "${FWD_USR}:${FWD_PASS}" \
+    || echo "monitor already configured"
