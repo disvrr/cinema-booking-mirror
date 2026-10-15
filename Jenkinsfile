@@ -9,9 +9,9 @@ pipeline {
     }
 
     environment {
-        DEPLOY_USER = 'deploy'
+        DEPLOY_USER = 'demo2-jenkins'
         JAR     = 'cinema-booking-1.0.0-SNAPSHOT.jar'
-        APP_DIR = '/home/deploy/DevOps-Demo1/target'
+        APP_DIR = '/home/demo2-jenkins/DevOps-Demo1/target'
     }
 
     stages {
