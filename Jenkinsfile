@@ -63,6 +63,7 @@ stage('Deploy in parallel') {
     }
 }
 }
+}
 
 
 
