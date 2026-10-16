@@ -23,14 +23,6 @@ pipeline {
                 sh 'mvn clean package -DskipTests'
             }
         }
-stage('Deploy in parallel') {
-            steps {
-                script {
-                    env.DEPLOYMENT_STARTED = 'true'
-                }
-            }
-
-            parallel {
         stage('Deploy to app1') {
             steps {
                 sh '''
@@ -61,7 +53,6 @@ stage('Deploy in parallel') {
     }
         }
     }
-}
 }
 }
 
