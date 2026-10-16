@@ -1,5 +1,5 @@
 def logDeploy(String host, String result) {
-    sh "echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) host=${host} build=${env.BUILD_NUMBER} result=${result}" >> /var/log/deploy-events.log"
+    sh "echo \"\$(date -u +%Y-%m-%dT%H:%M:%SZ) host=${host} build=${env.BUILD_NUMBER} result=${result}\" >> /var/log/deploy-events.log"
 }
 pipeline {
     agent any
