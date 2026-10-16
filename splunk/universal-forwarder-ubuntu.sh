@@ -47,9 +47,8 @@ EOF
     chown splunkfwd:splunkfwd "$SPLUNK_HOME"/etc/system/local/user-seed.conf
 
     sudo -u splunkfwd "$SPLUNK_HOME"/bin/splunk start --accept-license --answer-yes --no-prompt
-    rm -f "$SPLUNK_HOME"/etc/system/local/user-seed.conf
-  
     sudo -u splunkfwd "$SPLUNK_HOME"/bin/splunk stop # stop splunk to setup boot-start
+  
 fi
 
 # run on boot
