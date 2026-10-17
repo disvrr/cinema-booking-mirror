@@ -42,7 +42,16 @@ The access log must use the agreed key=value format with the upstream fields.
 
 ### Application servers (App 1 and App 2)
 
-One run on each server, index `app`. The host name is `app1` on App 1 and `app2` on App 2:
+**Before the script:** the application must write its log to `/var/log/cinema/app.log`. The service file needs these two lines under `[Service]`:
+
+```
+Environment="LOGGING_FILE_NAME=/var/log/cinema/app.log"
+LogsDirectory=cinema
+```
+
+`LogsDirectory=cinema` makes systemd create `/var/log/cinema` for the service user on every start. Without the folder the application cannot create `app.log` and only logs to the journal. Add the lines that are missing to the template `/opt/cinema/cinema.service`, then run `sudo /opt/cinema/setup_app.sh` again to rebuild the service.
+
+Then one run on each server, index `app`. The host name is `app1` on App 1 and `app2` on App 2:
 
 ```
 # on App 1
@@ -64,7 +73,14 @@ This is the Ubuntu default path for PostgreSQL 16. If the logging collector writ
 
 ### Jenkins server
 
-One run, index `jenkins`, host name `jenkins`:
+**Before the script:** create the log file first. The pipeline appends one line to it after every deploy, so the `jenkins` user must be able to write to it:
+
+```
+sudo touch /var/log/deploy-events.log
+sudo chown jenkins:jenkins /var/log/deploy-events.log
+```
+
+Then one run, index `jenkins`, host name `jenkins`:
 
 ```
 sudo bash universal-forwarder-ubuntu-24.04.sh <forwarder_user> '<forwarder_password>' 10.0.2.19 /var/log/deploy-events.log jenkins jenkins
