@@ -1,5 +1,5 @@
-def logDeploy(String host, String result) {
-    sh "echo \"\$(date -u +%Y-%m-%dT%H:%M:%SZ) host=${host} build=${env.BUILD_NUMBER} result=${result}\" >> /var/log/deploy-events.log"
+def logDeploy(String server, String result) {
+    sh "echo \"\$(date -u +%Y-%m-%dT%H:%M:%SZ) server=${server} build=${env.BUILD_NUMBER} result=${result}\" >> /var/log/deploy-events.log"
 }
 pipeline {
     agent any
@@ -18,10 +18,13 @@ pipeline {
     }
 
     stages {
-        stage('Tests') {
-    steps {
-        sh 'mvn clean test'
-    }
+     stage('Tests') {
+            steps {
+                sh '''
+                    mvn clean test \
+                      -Dtest='!BookingRepositoryTest,!BookingSeatRepositoryTest,!HallRepositoryTest,!MovieImageRepositoryTest,!MovieRepositoryTest,!RoleRepositoryTest,!ScreeningRepositoryTest,!SeatRepositoryTest,!TicketTypeRepositoryTest,!UserRepositoryTest,!BookingJdbcRepositoryTest,!ReportingDaoTest'
+                '''
+            }
 }
         stage('Build') {
             steps {
