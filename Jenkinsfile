@@ -15,6 +15,9 @@ pipeline {
         DEPLOY_USER = 'diana'
         JAR     = 'cinema-booking-1.0.0-SNAPSHOT.jar'
         APP_DIR = '/home/diana/DevOps-Demo1/target'
+        APP1_HOST   = '10.0.2.209'   
+        APP2_HOST   = '10.0.2.138'  
+        SSH_OPTS    = '-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10'
     }
 
     stages {
