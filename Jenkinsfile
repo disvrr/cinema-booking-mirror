@@ -12,9 +12,9 @@ pipeline {
     }
 
     environment {
-        DEPLOY_USER = 'deploy'
+        DEPLOY_USER = 'diana'
         JAR     = 'cinema-booking-1.0.0-SNAPSHOT.jar'
-        APP_DIR = '/home/deploy/DevOps-Demo1/target'
+        APP_DIR = '/home/diana/DevOps-Demo1/target'
     }
 
     stages {
