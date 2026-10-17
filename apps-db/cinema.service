@@ -1,0 +1,14 @@
+[Unit]
+Description=Cinema Booking Application
+After=network.target postgresql.service
+
+[Service]
+User=ubuntu
+WorkingDirectory=/opt/cinema
+EnvironmentFile=/opt/cinema/cinema.env
+ExecStart=/usr/bin/java -jar /opt/cinema/cinema-booking-1.0.0-SNAPSHOT.jar
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
