@@ -4,6 +4,7 @@ set -e
 echo "=== Installing PostgreSQL ==="
 sudo apt-get update -y
 sudo apt-get install -y postgresql postgresql-contrib awscli
+sudo apt-get install -y postgresql postgresql-contrib awscli-v2
 
 echo "=== Configuring Network Access ==="
 PG_CONF=$(ls /etc/postgresql/*/main/postgresql.conf)
