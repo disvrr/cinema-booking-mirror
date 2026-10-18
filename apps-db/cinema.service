@@ -5,6 +5,7 @@ After=network.target postgresql.service
 [Service]
 User=ubuntu
 WorkingDirectory=/opt/cinema
+EnvironmentFile=/opt/cinema/cinema.env
 Environment="LOGGING_FILE_NAME=/var/log/cinema/app.log"
 LogsDirectory=cinema
 ExecStart=/usr/bin/java -jar /opt/cinema/cinema-booking-1.0.0-SNAPSHOT.jar
