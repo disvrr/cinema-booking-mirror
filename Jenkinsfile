@@ -37,10 +37,10 @@ pipeline {
         stage('Deploy to app1') {
             steps {
                 sh '''
-                    ssh $DEPLOY_USER@demo2_app1 "mkdir -p $APP_DIR"
-                    scp target/$JAR $DEPLOY_USER@demo2_app1:$APP_DIR/
-                    ssh $DEPLOY_USER@demo2_app1 "sudo -n /opt/cinema/setup_app.sh"
-                    timeout 120 bash -c 'until curl -sf -o /dev/null http://demo2_app1:8080; do sleep 5; done'
+                    ssh $DEPLOY_USER@APP1_HOST "mkdir -p $APP_DIR"
+                    scp target/$JAR $DEPLOY_USER@APP1_HOST :$APP_DIR/
+                    ssh $DEPLOY_USER@APP1_HOST "sudo -n /opt/cinema/setup_app.sh"
+                    timeout 120 bash -c 'until curl -sf -o /dev/null http://APP1_HOST:8080; do sleep 5; done'
                 '''
             }
              post {
@@ -52,10 +52,10 @@ pipeline {
         stage('Deploy to app2') {
             steps {
                 sh '''
-                    ssh $DEPLOY_USER@demo2_app2 "mkdir -p $APP_DIR"
-                    scp target/$JAR $DEPLOY_USER@demo2_app2:$APP_DIR/
-                    ssh $DEPLOY_USER@demo2_app2 "sudo -n /opt/cinema/setup_app.sh"
-                    timeout 120 bash -c 'until curl -sf -o /dev/null http://demo2_app2:8080; do sleep 5; done'
+                    ssh $DEPLOY_USER@APP2_HOST "mkdir -p $APP_DIR"
+                    scp target/$JAR $DEPLOY_USER@APP2_HOST:$APP_DIR/
+                    ssh $DEPLOY_USER@APP2_HOST "sudo -n /opt/cinema/setup_app.sh"
+                    timeout 120 bash -c 'until curl -sf -o /dev/null http://APP2_HOST:8080; do sleep 5; done'
                 '''
             }
              post {
