@@ -37,31 +37,33 @@ pipeline {
         stage('Deploy to app1') {
             steps {
                 sh '''
-                    ssh $DEPLOY_USER@APP1_HOST "mkdir -p $APP_DIR"
-                    scp target/$JAR $DEPLOY_USER@APP1_HOST :$APP_DIR/
-                    ssh $DEPLOY_USER@APP1_HOST "sudo -n /opt/cinema/setup_app.sh"
-                    timeout 120 bash -c 'until curl -sf -o /dev/null http://APP1_HOST:8080; do sleep 5; done'
+                    ssh $SSH_OPTS $DEPLOY_USER@$APP1_HOST "mkdir -p $APP_DIR"
+                    scp $SSH_OPTS target/$JAR $DEPLOY_USER@$APP1_HOST:$APP_DIR/
+                    ssh $SSH_OPTS $DEPLOY_USER@$APP1_HOST "sudo -n /opt/cinema/setup_app.sh"
+                    ssh $SSH_OPTS $DEPLOY_USER@$APP1_HOST "sudo -n systemctl restart cinema"
+                    timeout 120 bash -c "until curl -sf -o /dev/null http://$APP1_HOST:8080; do sleep 5; done"
                 '''
             }
-             post {
-        success { script { logDeploy('app1', 'SUCCESS') } }
-        failure { script { logDeploy('app1', 'FAILURE') } }
-    }
+            post {
+                success { script { logDeploy('app1', 'SUCCESS') } }
+                failure { script { logDeploy('app1', 'FAILURE') } }
+            }
         }
 
         stage('Deploy to app2') {
             steps {
                 sh '''
-                    ssh $DEPLOY_USER@APP2_HOST "mkdir -p $APP_DIR"
-                    scp target/$JAR $DEPLOY_USER@APP2_HOST:$APP_DIR/
-                    ssh $DEPLOY_USER@APP2_HOST "sudo -n /opt/cinema/setup_app.sh"
-                    timeout 120 bash -c 'until curl -sf -o /dev/null http://APP2_HOST:8080; do sleep 5; done'
+                    ssh $SSH_OPTS $DEPLOY_USER@$APP2_HOST "mkdir -p $APP_DIR"
+                    scp $SSH_OPTS target/$JAR $DEPLOY_USER@$APP2_HOST:$APP_DIR/
+                    ssh $SSH_OPTS $DEPLOY_USER@$APP2_HOST "sudo -n /opt/cinema/setup_app.sh"
+                    ssh $SSH_OPTS $DEPLOY_USER@$APP2_HOST "sudo -n systemctl restart cinema"
+                    timeout 120 bash -c "until curl -sf -o /dev/null http://$APP2_HOST:8080; do sleep 5; done"
                 '''
             }
-             post {
-        success { script { logDeploy('app2', 'SUCCESS') } }
-        failure { script { logDeploy('app2', 'FAILURE') } }
-    }
+            post {
+                success { script { logDeploy('app2', 'SUCCESS') } }
+                failure { script { logDeploy('app2', 'FAILURE') } }
+            }
         }
     }
 }
