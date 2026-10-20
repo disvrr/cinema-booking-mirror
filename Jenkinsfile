@@ -85,7 +85,7 @@ pipeline {
                         "
 
                   ssh -i "$SSH_KEY" $SSH_OPTS "$DEPLOY_USER@$APP1_HOST" \
-    'timeout 120 bash -c '\''until curl -fsS --max-time 5 -o /dev/null http://127.0.0.1:8080/; do sleep 5; done'\
+    'timeout 120 bash -c '\''until curl -fsS --max-time 5 -o /dev/null http://127.0.0.1:8080/; do sleep 5; done'\'''
                 '''
             }
             post {
@@ -134,7 +134,7 @@ pipeline {
                         "
 
                    ssh -i "$SSH_KEY" $SSH_OPTS "$DEPLOY_USER@$APP2_HOST" \
-    'timeout 120 bash -c '\''until curl -fsS --max-time 5 -o /dev/null http://127.0.0.1:8080/; do sleep 5; done'\
+    'timeout 120 bash -c '\''until curl -fsS --max-time 5 -o /dev/null http://127.0.0.1:8080/; do sleep 5; done'\'''
                 '''
             }
             post {
