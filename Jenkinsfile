@@ -15,7 +15,7 @@ pipeline {
         DEPLOY_USER = 'diana'
         JAR     = 'cinema-booking-1.0.0-SNAPSHOT.jar'
          REMOTE_APP_DIR = '/opt/cinema'
-
+STAGING_DIR = '/tmp/cinema-deploy'
     APP1_HOST = '10.0.2.209'
     APP2_HOST = '10.0.2.138'
 
