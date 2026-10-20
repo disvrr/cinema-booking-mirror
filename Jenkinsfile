@@ -23,19 +23,6 @@ pipeline {
     }
 
     stages {
-         stage('Checkout') {
-        steps {
-            checkout scm
-
-            sh '''
-                echo "Current commit:"
-                git rev-parse --short HEAD
-
-                test -f apps-db/setup_app.sh
-                test -f apps-db/cinema.service
-            '''
-        }
-    }
      stage('Tests') {
             steps {
                 sh '''
@@ -55,24 +42,30 @@ pipeline {
         }
         stage('Deploy to app1') {
             steps {
-                 sh '''
-                set -eu
+            sh '''
+                    set -eu
 
-                scp $SSH_OPTS \
-                    "target/$JAR" \
-                    "$DEPLOY_USER@$APP1_HOST:/tmp/$JAR"
+                    ssh $DEPLOY_USER@$APP1_HOST \
+                        "mkdir -p $STAGING_DIR"
 
-                ssh $SSH_OPTS "$DEPLOY_USER@$APP1_HOST" "
-                    sudo -n /usr/bin/install \
-                        -o ubuntu -g ubuntu -m 0644 \
-                        /tmp/$JAR \
-                        $REMOTE_APP_DIR/$JAR
+                    scp apps-db/setup_app.sh \
+                        apps-db/cinema.service \
+                        target/$JAR \
+                        $DEPLOY_USER@$APP1_HOST:$STAGING_DIR/
 
-                    rm -f /tmp/$JAR
+                    ssh $DEPLOY_USER@$APP1_HOST "
+                        set -eu
+                        sudo -n install -o root -g root -m 755 \
+                            $STAGING_DIR/setup_app.sh \
+                            /opt/cinema/setup_app.sh
 
-                    sudo -n /usr/bin/systemctl restart cinema
-                "
-            '''
+                        sudo -n /opt/cinema/setup_app.sh
+                    "
+
+                    timeout 120 bash -c \
+                        'until curl -fsS -o /dev/null "http://$1:8080"; do sleep 5; done' \
+                        _ "$APP1_HOST"
+                '''
             }
             post {
                 success { script { logDeploy('app1', 'SUCCESS') } }
@@ -82,24 +75,30 @@ pipeline {
 
         stage('Deploy to app2') {
             steps {
-               sh '''
-                set -eu
+              sh '''
+                    set -eu
 
-                scp $SSH_OPTS \
-                    "target/$JAR" \
-                    "$DEPLOY_USER@$APP2_HOST:/tmp/$JAR"
+                    ssh $DEPLOY_USER@$APP2_HOST \
+                        "mkdir -p $STAGING_DIR"
 
-                ssh $SSH_OPTS "$DEPLOY_USER@$APP2_HOST" "
-                    sudo -n /usr/bin/install \
-                        -o ubuntu -g ubuntu -m 0644 \
-                        /tmp/$JAR \
-                        $REMOTE_APP_DIR/$JAR
+                    scp apps-db/setup_app.sh \
+                        apps-db/cinema.service \
+                        target/$JAR \
+                        $DEPLOY_USER@$APP2_HOST:$STAGING_DIR/
 
-                    rm -f /tmp/$JAR
+                    ssh $DEPLOY_USER@$APP2_HOST "
+                        set -eu
+                        sudo -n install -o root -g root -m 755 \
+                            $STAGING_DIR/setup_app.sh \
+                            /opt/cinema/setup_app.sh
 
-                    sudo -n /usr/bin/systemctl restart cinema
-                "
-            '''
+                        sudo -n /opt/cinema/setup_app.sh
+                    "
+
+                    timeout 120 bash -c \
+                        'until curl -fsS -o /dev/null "http://$1:8080"; do sleep 5; done' \
+                        _ "$APP2_HOST"
+                '''
             }
             post {
                 success { script { logDeploy('app2', 'SUCCESS') } }
