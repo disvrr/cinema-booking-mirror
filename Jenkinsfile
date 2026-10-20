@@ -27,7 +27,15 @@ pipeline {
     }
 
     stages {
-    
+    stage('Tests') {
+            steps {
+                sh '''
+                    mvn clean test \
+                      -Dtest='!BookingRepositoryTest,!BookingSeatRepositoryTest,!HallRepositoryTest,!MovieImageRepositoryTest,!MovieRepositoryTest,!RoleRepositoryTest,!ScreeningRepositoryTest,!SeatRepositoryTest,!TicketTypeRepositoryTest,!UserRepositoryTest,!BookingJdbcRepositoryTest,!ReportingDaoTest'
+                '''
+            }
+}
+
         stage('Build') {
             steps {
                 sh '''
