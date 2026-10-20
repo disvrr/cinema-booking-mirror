@@ -137,7 +137,7 @@ pipeline {
 
                    
                                           ssh -i "$SSH_KEY" $SSH_OPTS \
-                        "$DEPLOY_USER@$APP1_HOST" \
+                        "$DEPLOY_USER@$APP2_HOST" \
                         "timeout 120 curl -fsS --retry 23 --retry-delay 5 --retry-connrefused --max-time 5 -o /dev/null http://127.0.0.1:8080/"
                 '''
             }
