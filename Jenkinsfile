@@ -84,9 +84,8 @@ pipeline {
                             sudo -n '$REMOTE_APP_DIR/setup_app.sh'
                         "
 
-                    timeout 120 bash -c \
-                        'until curl -sS -o /dev/null "http://$1:8080/"; do sleep 5; done' \
-                        _ "$APP1_HOST"
+                  ssh -i "$SSH_KEY" $SSH_OPTS "$DEPLOY_USER@$APP1_HOST" \
+    'timeout 120 bash -c '\''until curl -fsS --max-time 5 -o /dev/null http://127.0.0.1:8080/; do sleep 5; done'\
                 '''
             }
             post {
@@ -134,9 +133,8 @@ pipeline {
                             sudo -n '$REMOTE_APP_DIR/setup_app.sh'
                         "
 
-                    timeout 120 bash -c \
-                        'until curl -sS -o /dev/null "http://$1:8080/"; do sleep 5; done' \
-                        _ "$APP2_HOST"
+                   ssh -i "$SSH_KEY" $SSH_OPTS "$DEPLOY_USER@$APP2_HOST" \
+    'timeout 120 bash -c '\''until curl -fsS --max-time 5 -o /dev/null http://127.0.0.1:8080/; do sleep 5; done'\
                 '''
             }
             post {
