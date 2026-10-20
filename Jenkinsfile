@@ -147,13 +147,13 @@ pipeline {
                             cd '$STAGING_DIR'
                             sudo -n '$REMOTE_APP_DIR/setup_app.sh'
                         "
-   ssh -i "$SSH_KEY" $SSH_OPTS \
-                        "$DEPLOY_USER@$APP1_HOST" '
+    ssh -i "$SSH_KEY" $SSH_OPTS \
+                        "$DEPLOY_USER@$APP2_HOST" '
                             for i in $(seq 1 24); do
                                 if curl -fsS --max-time 5 \
                                     -o /dev/null \
                                     http://127.0.0.1:8080/; then
-                                    echo "App1 is healthy"
+                                    echo "App2 is healthy"
                                     exit 0
                                 fi
 
@@ -161,7 +161,7 @@ pipeline {
                                 sleep 5
                             done
 
-                            echo "ERROR: App1 did not become healthy within 120 seconds"
+                            echo "ERROR: App2 did not become healthy within 120 seconds"
                             exit 1
                         '
                 '''
