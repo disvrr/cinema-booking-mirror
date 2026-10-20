@@ -1,3 +1,6 @@
+def logDeploy(String server, String result) {
+    sh "echo \"\$(date -u +%Y-%m-%dT%H:%M:%SZ) server=${server} build=${env.BUILD_NUMBER} result=${result}\" >> /var/log/deploy-events.log"
+}
 pipeline {
     agent any
 
@@ -9,37 +12,163 @@ pipeline {
     }
 
     environment {
-        DEPLOY_USER = 'deploy'
-        JAR     = 'cinema-booking-1.0.0-SNAPSHOT.jar'
-        APP_DIR = '/home/deploy/DevOps-Demo1/target'
+        DEPLOY_USER = 'diana'
+        SSH_KEY = '/var/lib/jenkins/.ssh/id_ed25519'
+
+        JAR = 'cinema-booking-1.0.0-SNAPSHOT.jar'
+
+        REMOTE_APP_DIR = '/opt/cinema'
+        STAGING_DIR = '/tmp/cinema-deploy'
+
+        APP1_HOST = '10.0.2.209'
+        APP2_HOST = '10.0.2.138'
+
+    SSH_OPTS = '-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10'
     }
 
     stages {
-        stage('Build') {
-            steps {
-                sh 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Deploy to app1') {
+    stage('Tests') {
             steps {
                 sh '''
-                    ssh $DEPLOY_USER@app1 "mkdir -p $APP_DIR"
-                    scp target/$JAR $DEPLOY_USER@app1:$APP_DIR/
-                    ssh $DEPLOY_USER@app1 "sudo -n /opt/cinema/setup_app.sh"
-                    timeout 120 bash -c 'until curl -sf -o /dev/null http://app1:8080; do sleep 5; done'
+                    mvn clean test \
+                      -Dtest='!BookingRepositoryTest,!BookingSeatRepositoryTest,!HallRepositoryTest,!MovieImageRepositoryTest,!MovieRepositoryTest,!RoleRepositoryTest,!ScreeningRepositoryTest,!SeatRepositoryTest,!TicketTypeRepositoryTest,!UserRepositoryTest,!BookingJdbcRepositoryTest,!ReportingDaoTest'
                 '''
+            }
+}
+
+        stage('Build') {
+            steps {
+                sh '''
+                mvn package -DskipTests
+                test -s "target/$JAR"
+                ls -lh "target/$JAR"
+            '''
+            }
+        }
+        stage('Deploy to app1') {
+            steps {
+             sh '''
+                    set -eu
+
+                    ssh -i "$SSH_KEY" $SSH_OPTS \
+                        "$DEPLOY_USER@$APP1_HOST" \
+                        "mkdir -p '$STAGING_DIR'"
+
+                    scp -i "$SSH_KEY" $SSH_OPTS \
+                        apps-db/setup_app.sh \
+                        apps-db/cinema.service \
+                        "target/$JAR" \
+                        "$DEPLOY_USER@$APP1_HOST:$STAGING_DIR/"
+
+                    ssh -i "$SSH_KEY" $SSH_OPTS \
+                        "$DEPLOY_USER@$APP1_HOST" "
+                            set -eu
+
+                            sudo -n install -d \
+                                '$REMOTE_APP_DIR' \
+                                /var/log/cinema
+
+                            sudo -n install -o root -g root -m 755 \
+                                '$STAGING_DIR/setup_app.sh' \
+                                '$REMOTE_APP_DIR/setup_app.sh'
+
+                            sudo -n install -o ubuntu -g ubuntu -m 644 \
+                                '$STAGING_DIR/$JAR' \
+                                '$REMOTE_APP_DIR/$JAR'
+
+                            test -f '$REMOTE_APP_DIR/cinema.env'
+                            id ubuntu >/dev/null
+                            command -v java >/dev/null
+
+                            cd '$STAGING_DIR'
+                            sudo -n '$REMOTE_APP_DIR/setup_app.sh'
+                        "
+
+                    ssh -i "$SSH_KEY" $SSH_OPTS \
+                        "$DEPLOY_USER@$APP1_HOST" '
+                            for i in $(seq 1 24); do
+                                if curl -fsS --max-time 5 \
+                                    -o /dev/null \
+                                    http://127.0.0.1:8080/; then
+                                    echo "App1 is healthy"
+                                    exit 0
+                                fi
+
+                                echo "Attempt $i/24: application is not ready"
+                                sleep 5
+                            done
+
+                            echo "ERROR: App1 did not become healthy within 120 seconds"
+                            exit 1
+                        '
+                '''
+            }
+            post {
+                success { script { logDeploy('app1', 'SUCCESS') } }
+                failure { script { logDeploy('app1', 'FAILURE') } }
             }
         }
 
         stage('Deploy to app2') {
             steps {
-                sh '''
-                    ssh $DEPLOY_USER@app2 "mkdir -p $APP_DIR"
-                    scp target/$JAR $DEPLOY_USER@app2:$APP_DIR/
-                    ssh $DEPLOY_USER@app2 "sudo -n /opt/cinema/setup_app.sh"
-                    timeout 120 bash -c 'until curl -sf -o /dev/null http://app2:8080; do sleep 5; done'
+             sh '''
+                    set -eu
+
+                    ssh -i "$SSH_KEY" $SSH_OPTS \
+                        "$DEPLOY_USER@$APP2_HOST" \
+                        "mkdir -p '$STAGING_DIR'"
+
+                    scp -i "$SSH_KEY" $SSH_OPTS \
+                        apps-db/setup_app.sh \
+                        apps-db/cinema.service \
+                        "target/$JAR" \
+                        "$DEPLOY_USER@$APP2_HOST:$STAGING_DIR/"
+
+                    ssh -i "$SSH_KEY" $SSH_OPTS \
+                        "$DEPLOY_USER@$APP2_HOST" "
+                            set -eu
+
+                            sudo -n install -d \
+                                '$REMOTE_APP_DIR' \
+                                /var/log/cinema
+
+                            sudo -n install -o root -g root -m 755 \
+                                '$STAGING_DIR/setup_app.sh' \
+                                '$REMOTE_APP_DIR/setup_app.sh'
+
+                            sudo -n install -o ubuntu -g ubuntu -m 644 \
+                                '$STAGING_DIR/$JAR' \
+                                '$REMOTE_APP_DIR/$JAR'
+
+                            test -f '$REMOTE_APP_DIR/cinema.env'
+                            id ubuntu >/dev/null
+                            command -v java >/dev/null
+
+                            cd '$STAGING_DIR'
+                            sudo -n '$REMOTE_APP_DIR/setup_app.sh'
+                        "
+    ssh -i "$SSH_KEY" $SSH_OPTS \
+                        "$DEPLOY_USER@$APP2_HOST" '
+                            for i in $(seq 1 24); do
+                                if curl -fsS --max-time 5 \
+                                    -o /dev/null \
+                                    http://127.0.0.1:8080/; then
+                                    echo "App2 is healthy"
+                                    exit 0
+                                fi
+
+                                echo "Attempt $i/24: application is not ready"
+                                sleep 5
+                            done
+
+                            echo "ERROR: App2 did not become healthy within 120 seconds"
+                            exit 1
+                        '
                 '''
+            }
+            post {
+                success { script { logDeploy('app2', 'SUCCESS') } }
+                failure { script { logDeploy('app2', 'FAILURE') } }
             }
         }
     }
