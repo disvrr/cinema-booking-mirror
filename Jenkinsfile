@@ -84,8 +84,9 @@ pipeline {
                             sudo -n '$REMOTE_APP_DIR/setup_app.sh'
                         "
 
-                  ssh -i "$SSH_KEY" $SSH_OPTS "$DEPLOY_USER@$APP1_HOST" \
-    'timeout 120 bash -c '\''until curl -fsS --max-time 5 -o /dev/null http://127.0.0.1:8080/; do sleep 5; done'\'''
+                  
+                        "$DEPLOY_USER@$APP1_HOST" \
+                        "timeout 120 curl -fsS --retry 23 --retry-delay 5 --retry-connrefused --max-time 5 -o /dev/null http://127.0.0.1:8080/"
                 '''
             }
             post {
@@ -133,8 +134,9 @@ pipeline {
                             sudo -n '$REMOTE_APP_DIR/setup_app.sh'
                         "
 
-                   ssh -i "$SSH_KEY" $SSH_OPTS "$DEPLOY_USER@$APP2_HOST" \
-    'timeout 120 bash -c '\''until curl -fsS --max-time 5 -o /dev/null http://127.0.0.1:8080/; do sleep 5; done'\'''
+                   
+                        "$DEPLOY_USER@$APP2_HOST" \
+                        "timeout 120 curl -fsS --retry 23 --retry-delay 5 --retry-connrefused --max-time 5 -o /dev/null http://127.0.0.1:8080/"
                 '''
             }
             post {
