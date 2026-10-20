@@ -14,7 +14,6 @@ pipeline {
     environment {
         DEPLOY_USER = 'diana'
         JAR     = 'cinema-booking-1.0.0-SNAPSHOT.jar'
-        APP_DIR = '/home/diana/DevOps-Demo1/target'
          REMOTE_APP_DIR = '/opt/cinema'
 
     APP1_HOST = '10.0.2.209'
