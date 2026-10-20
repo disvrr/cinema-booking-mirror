@@ -15,12 +15,28 @@ pipeline {
         DEPLOY_USER = 'diana'
         JAR     = 'cinema-booking-1.0.0-SNAPSHOT.jar'
         APP_DIR = '/home/diana/DevOps-Demo1/target'
-        APP1_HOST   = '10.0.2.209'   
-        APP2_HOST   = '10.0.2.138'  
-        SSH_OPTS    = '-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10'
+         REMOTE_APP_DIR = '/opt/cinema'
+
+    APP1_HOST = '10.0.2.209'
+    APP2_HOST = '10.0.2.138'
+
+    SSH_OPTS = '-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10'
     }
 
     stages {
+         stage('Checkout') {
+        steps {
+            checkout scm
+
+            sh '''
+                echo "Current commit:"
+                git rev-parse --short HEAD
+
+                test -f apps-db/setup_app.sh
+                test -f apps-db/cinema.service
+            '''
+        }
+    }
      stage('Tests') {
             steps {
                 sh '''
@@ -31,17 +47,33 @@ pipeline {
 }
         stage('Build') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh '''
+                mvn package -DskipTests
+                test -s "target/$JAR"
+                ls -lh "target/$JAR"
+            '''
             }
         }
         stage('Deploy to app1') {
             steps {
-                sh '''
-                    scp $SSH_OPTS ~/cinema-booking-mirror/apps-db/setup_app.sh $DEPLOY_USER@$APP1_HOST:/tmp/setup_app.sh
-                    ssh $SSH_OPTS $DEPLOY_USER@$APP1_HOST "sudo mv /tmp/setup_app.sh /opt/cinema/setup_app.sh && sudo chmod 755 /opt/cinema/setup_app.sh"
-                    ssh $SSH_OPTS $DEPLOY_USER@$APP1_HOST "sudo -n /opt/cinema/setup_app.sh" 
-                    timeout 120 bash -c "until curl -sf -o /dev/null http://$APP1_HOST:8080; do sleep 5; done"
-                '''
+                 sh '''
+                set -eu
+
+                scp $SSH_OPTS \
+                    "target/$JAR" \
+                    "$DEPLOY_USER@$APP1_HOST:/tmp/$JAR"
+
+                ssh $SSH_OPTS "$DEPLOY_USER@$APP1_HOST" "
+                    sudo -n /usr/bin/install \
+                        -o ubuntu -g ubuntu -m 0644 \
+                        /tmp/$JAR \
+                        $REMOTE_APP_DIR/$JAR
+
+                    rm -f /tmp/$JAR
+
+                    sudo -n /usr/bin/systemctl restart cinema
+                "
+            '''
             }
             post {
                 success { script { logDeploy('app1', 'SUCCESS') } }
@@ -51,12 +83,24 @@ pipeline {
 
         stage('Deploy to app2') {
             steps {
-                sh '''
-                    scp $SSH_OPTS ~/cinema-booking-mirror/apps-db/setup_app.sh $DEPLOY_USER@$APP2_HOST:/tmp/setup_app.sh
-                    ssh $SSH_OPTS $DEPLOY_USER@$APP2_HOST "sudo mv /tmp/setup_app.sh /opt/cinema/setup_app.sh && sudo chmod 755 /opt/cinema/setup_app.sh"
-                    ssh $SSH_OPTS $DEPLOY_USER@$APP2_HOST "sudo -n /opt/cinema/setup_app.sh" 
-                    timeout 120 bash -c "until curl -sf -o /dev/null http://$APP2_HOST:8080; do sleep 5; done"
-                '''
+               sh '''
+                set -eu
+
+                scp $SSH_OPTS \
+                    "target/$JAR" \
+                    "$DEPLOY_USER@$APP2_HOST:/tmp/$JAR"
+
+                ssh $SSH_OPTS "$DEPLOY_USER@$APP2_HOST" "
+                    sudo -n /usr/bin/install \
+                        -o ubuntu -g ubuntu -m 0644 \
+                        /tmp/$JAR \
+                        $REMOTE_APP_DIR/$JAR
+
+                    rm -f /tmp/$JAR
+
+                    sudo -n /usr/bin/systemctl restart cinema
+                "
+            '''
             }
             post {
                 success { script { logDeploy('app2', 'SUCCESS') } }
